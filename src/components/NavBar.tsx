@@ -71,13 +71,13 @@ const Navbar = () => {
                 // State: NOT LOGGED IN
                 <>
                   <Link
-                    href="/login"
+                    href="/auth"
                     className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
                   >
                     Log in
                   </Link>
                   <Link
-                    href="/signup"
+                    href="/auth"
                     className="bg-linear-to-r from-cyan-500 to-gray-800 hover:from-cyan-700 hover:to-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium shadow-md shadow-cyan-500/20 transition-all"
                   >
                     Sign up
