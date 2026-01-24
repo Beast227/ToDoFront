@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { user } from "@/types/Types";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 type AuthMode = "LOGIN" | "SIGNUP";
 
@@ -15,6 +16,7 @@ export default function AuthPage() {
         password: "",
         username: ""
     });
+    const router = useRouter();
 
     const toggleAuthMode = () => {
         setAuthMode((prev) => (prev === "LOGIN" ? "SIGNUP" : "LOGIN"));
@@ -60,6 +62,8 @@ export default function AuthPage() {
                 localStorage.setItem("token", data.token);
 
                 toast.success("Login successfull!")
+
+                router.push("/dashboard");
             } catch (error) {
                 console.error(error)
                 toast.error("Shit on login")
@@ -88,7 +92,9 @@ export default function AuthPage() {
                     email: "",
                     password: "",
                     username: ""
-                })
+                });
+
+                toggleAuthMode();
 
             } catch (error) {
                 console.error(error)
@@ -96,6 +102,14 @@ export default function AuthPage() {
             }
         }
     };
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+
+        if (token) {
+            router.push("/dashboard")
+        }
+    }, [])
 
     return (
         <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-950 px-4 sm:px-6 lg:px-8 relative overflow-hidden">

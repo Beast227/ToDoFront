@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 
 const MOCK_USER_IS_LOGGED_IN = false; 
@@ -8,13 +9,19 @@ const MOCK_USER_IS_LOGGED_IN = false;
 const useMockAuth = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // Simulate an async check for session
+    
     const checkAuth = setTimeout(() => {
-      setIsLoggedIn(MOCK_USER_IS_LOGGED_IN);
-      setIsLoading(false);
-    }, 500); // small delay to simulate loading
+      const token = localStorage.getItem("token");
+
+      if (token) {
+        router.push("/dashboard");
+      }
+    });
+
+    setIsLoading(false);
 
     return () => clearTimeout(checkAuth);
   }, []);

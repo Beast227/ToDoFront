@@ -43,7 +43,6 @@ export default function RootLayout({
             },
           }}
         />
-        <Navbar />
         <main className="grow">
           {children}
         </main>
