@@ -6,22 +6,20 @@ import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { todocat } from "@/types/Types";
 
-
-
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const [categories, setCategories] = useState<todocat[]>();
+    const [categories, setCategories] = useState<todocat[]>([]);
     const [newCatName, setNewCatName] = useState("");
     const searchParams = useSearchParams();
     const activeCategory = searchParams.get("category") || "My Day";
 
+    // --- GET CATEGORIES ---
     const handleGetToDOCategories = async () => {
         try {
             const token = localStorage.getItem("token");
-
             const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/todo/category`, {
                 method: "GET",
                 headers: {
@@ -32,10 +30,8 @@ export default function DashboardLayout({
 
             if (response.ok) {
                 const data = await response.json();
-
                 setCategories(data);
             }
-
         } catch (error) {
             console.error(error);
             toast.error("Pooped on getting categories 🥀");
@@ -46,14 +42,13 @@ export default function DashboardLayout({
         handleGetToDOCategories();
     }, [])
 
+    // --- ADD CATEGORY ---
     const handleAddCategory = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newCatName.trim()) return;
-        // TODO: Call DB to create category
-        
+
         try {
             const token = localStorage.getItem("token");
-
             const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/todo/category`, {
                 method: "POST",
                 headers: {
@@ -65,17 +60,39 @@ export default function DashboardLayout({
 
             if (response.ok) {
                 const data = await response.json();
-
-                setCategories((prev) => {
-                    return prev ? [...prev, data] : [data];
-                });
+                setCategories((prev) => (prev ? [...prev, data] : [data]));
+                setNewCatName("");
             }
         } catch (error) {
             console.error(error);
             toast.error("Pooped on adding categories 🥀");
         }
+    };
 
-        setNewCatName("");
+    // --- DELETE CATEGORY (New) ---
+    const handleDeleteCategory = async (id: number) => { // Assuming Id is number based on your types
+
+        try {
+            const token = localStorage.getItem("token");
+            // Adjust endpoint if your delete path is different (e.g. /todo/category/{id})
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/todo/category?id=${id}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                // Update UI immediately
+                setCategories(categories.filter((cat) => cat.Id !== id));
+                toast.success("Category deleted");
+            } else {
+                toast.error("Failed to delete");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Error deleting category");
+        }
     };
 
     return (
@@ -96,20 +113,43 @@ export default function DashboardLayout({
                         Collections
                     </p>
 
-                    {categories && categories.map((cat) => (
-                        <Link
-                            key={cat.Id}
-                            href={`/dashboard?catId=${cat.Id}&title=${cat.category}`}
-                            className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200 group ${activeCategory === cat.category
-                                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
-                                    : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                    {categories && categories.map((cat) => {
+                        const isActive = activeCategory === cat.category;
+                        
+                        return (
+                            <div 
+                                key={cat.Id}
+                                className={`group flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                                    isActive
+                                        ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+                                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
                                 }`}
-                        >
-                            {/* Simple Icon Placeholder */}
-                            <span className={`w-2 h-2 rounded-full mr-3 ${activeCategory === cat.category ? "bg-cyan-400" : "bg-gray-600 group-hover:bg-gray-400"}`}></span>
-                            {cat.category}
-                        </Link>
-                    ))}
+                            >
+                                {/* Link takes up available space */}
+                                <Link
+                                    href={`/dashboard?catId=${cat.Id}&title=${cat.category}`}
+                                    className="flex items-center flex-1 truncate"
+                                >
+                                    <span className={`w-2 h-2 rounded-full mr-3 shrink-0 ${isActive ? "bg-cyan-400" : "bg-gray-600 group-hover:bg-gray-400"}`}></span>
+                                    {cat.category}
+                                </Link>
+
+                                {/* Delete Button - Only visible on hover */}
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault(); // Prevent navigation
+                                        handleDeleteCategory(cat.Id);
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-500 transition-all rounded hover:bg-gray-700/50"
+                                    title="Delete Category"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        );
+                    })}
                 </div>
 
                 {/* Add Category Input */}
@@ -131,7 +171,6 @@ export default function DashboardLayout({
 
                 {/* --- TOP NAVBAR --- */}
                 <header className="h-16 bg-gray-900/50 backdrop-blur-md border-b border-gray-800 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-
                     {/* Search Bar */}
                     <div className="flex-1 max-w-lg">
                         <div className="relative">

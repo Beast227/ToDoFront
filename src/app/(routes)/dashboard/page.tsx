@@ -25,7 +25,7 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/todo/item?CatId=${currentCatId}`, {
         method: "GET",
         headers: {
@@ -38,7 +38,7 @@ export default function DashboardPage() {
         const data = await response.json();
         setTodos(data);
       } else {
-        setTodos([]); 
+        setTodos([]);
       }
     } catch (error) {
       console.error("Error fetching todos", error);
@@ -64,58 +64,72 @@ export default function DashboardPage() {
     if (!newTask.trim()) return;
 
     const token = localStorage.getItem("token");
-    
+
     // 1. Create the payload expected by your backend
     const payload = {
-        title: newTask,
-        categoryId: currentCatId, 
-        steps: [],
-        dueDate: new Date().toISOString()
+      title: newTask,
+      categoryId: currentCatId,
+      steps: [],
+      dueDate: new Date().toISOString()
     };
 
     try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/todo/item?id=${currentCatId}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify(payload)
-        });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/todo/item?id=${currentCatId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
 
-        if (response.ok) {
-            const savedTodo = await response.json();
-            
-            // 2. Add the real DB response to state
-            setTodos((prev) => [...prev, savedTodo]);
-            setNewTask("");
-            toast.success("Task created");
-        } else {
-            toast.error("Failed to create task");
-        }
+      if (response.ok) {
+        const savedTodo = await response.json();
+        console.log(savedTodo);
+
+        // 2. Add the real DB response to state
+        setTodos((prev) => [...prev, savedTodo]);
+        setNewTask("");
+        toast.success("Task created");
+      } else {
+        toast.error("Failed to create task");
+      }
     } catch (error) {
-        console.error("Add error", error);
-        toast.error("Something went wrong");
+      console.error("Add error", error);
+      toast.error("Something went wrong");
     }
   };
 
   const handleUpdateTodoState = (updatedTodo: Todo) => {
-     setTodos((prev) => prev.map(t => t.id === updatedTodo.id ? updatedTodo : t));
-     
-     // Also update selectedTodo so the sidebar reflects the changes immediately
-     setSelectedTodo(updatedTodo); 
+    setTodos((prev) => prev.map(t => t.id === updatedTodo.id ? updatedTodo : t));
+
+    // Also update selectedTodo so the sidebar reflects the changes immediately
+    setSelectedTodo(updatedTodo);
   };
+
+  const handleRemoveToDo = (id: number) => {
+    setTodos((prev) => prev.filter(t => t.id != id))
+  }
 
   const deleteTodo = async (id: number) => {
-     
-     setTodos(todos.filter(t => t.id !== id));
+    const token = localStorage.getItem("token");
 
-     
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/todo/item?CatId=${currentCatId}&ItemId=${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    })
 
-     setSelectedTodo(null);
-     toast.success("Task deleted");
+    if (response.ok) {
+      setTodos(todos.filter(t => t.id !== id));
+      setSelectedTodo(null);
+      toast.success("Task deleted");
+    }
+
   };
-  
+
   const toggleTodo = (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
     setTodos(todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
@@ -152,9 +166,9 @@ export default function DashboardPage() {
 
           {/* List */}
           {loading ? (
-             <div className="space-y-4">
-                {[1,2,3].map(i => <div key={i} className="h-16 bg-gray-900/50 rounded-lg animate-pulse border border-gray-800"></div>)}
-             </div>
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => <div key={i} className="h-16 bg-gray-900/50 rounded-lg animate-pulse border border-gray-800"></div>)}
+            </div>
           ) : (
             <div className="space-y-2 pb-20">
               {todos.length === 0 ? (
@@ -175,8 +189,8 @@ export default function DashboardPage() {
                     <div
                       onClick={(e) => toggleTodo(e, todo.id)}
                       className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer z-10 ${todo.completed
-                          ? "bg-cyan-600 border-cyan-600"
-                          : "border-gray-600 hover:border-cyan-500"
+                        ? "bg-cyan-600 border-cyan-600"
+                        : "border-gray-600 hover:border-cyan-500"
                         }`}
                     >
                       {todo.completed && (
@@ -204,6 +218,7 @@ export default function DashboardPage() {
           onClose={() => setSelectedTodo(null)}
           onDelete={deleteTodo}
           onUpdate={handleUpdateTodoState}
+          onChange={handleRemoveToDo}
         />
       )}
     </div>
