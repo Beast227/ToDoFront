@@ -18,6 +18,19 @@ export default function DashboardPage() {
   const [newTask, setNewTask] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // --- HELPER: Check if Overdue ---
+  const isOverdue = (todo: Todo) => {
+    // If no date or already completed, it's not overdue
+    if (!todo.dueDate || todo.completed) return false;
+    
+    const now = new Date();
+    const due = new Date(todo.dueDate);
+    
+    // Set time to midnight for fair comparison (optional, depends on your precision)
+    // currently comparing strict timestamps
+    return due < now;
+  };
+
   // --- FETCH TODOS ---
   const handleGetTodo = useCallback(async () => {
     if (!currentCatId) return;
@@ -65,7 +78,7 @@ export default function DashboardPage() {
 
     const token = localStorage.getItem("token");
 
-    // 1. Create the payload expected by your backend
+    // Default to end of today for new tasks? Or just current time.
     const payload = {
       title: newTask,
       categoryId: currentCatId,
@@ -85,9 +98,6 @@ export default function DashboardPage() {
 
       if (response.ok) {
         const savedTodo = await response.json();
-        console.log(savedTodo);
-
-        // 2. Add the real DB response to state
         setTodos((prev) => [...prev, savedTodo]);
         setNewTask("");
         toast.success("Task created");
@@ -102,13 +112,12 @@ export default function DashboardPage() {
 
   const handleUpdateTodoState = (updatedTodo: Todo) => {
     setTodos((prev) => prev.map(t => t.id === updatedTodo.id ? updatedTodo : t));
-
-    // Also update selectedTodo so the sidebar reflects the changes immediately
     setSelectedTodo(updatedTodo);
   };
 
   const handleRemoveToDo = (id: number) => {
     setTodos((prev) => prev.filter(t => t.id != id))
+    setSelectedTodo(null);
   }
 
   const deleteTodo = async (id: number) => {
@@ -123,11 +132,9 @@ export default function DashboardPage() {
     })
 
     if (response.ok) {
-      setTodos(todos.filter(t => t.id !== id));
-      setSelectedTodo(null);
+      handleRemoveToDo(id);
       toast.success("Task deleted");
     }
-
   };
 
   const toggleTodo = (e: React.MouseEvent, id: number) => {
@@ -177,34 +184,61 @@ export default function DashboardPage() {
                   <p className="text-gray-400">All caught up! No tasks here.</p>
                 </div>
               ) : (
-                todos.map((todo) => (
-                  <div
-                    key={todo.id}
-                    onClick={() => setSelectedTodo(todo)}
-                    className={`group flex items-center p-4 bg-gray-900/50 border rounded-lg cursor-pointer transition-all duration-200 
-                      ${selectedTodo?.id === todo.id ? "border-cyan-500/50 ring-1 ring-cyan-500/20 bg-gray-800/80" : "border-gray-800/50 hover:border-gray-700"}
-                      ${todo.completed ? "opacity-60" : "opacity-100"}
-                    `}
-                  >
-                    <div
-                      onClick={(e) => toggleTodo(e, todo.id)}
-                      className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer z-10 ${todo.completed
-                        ? "bg-cyan-600 border-cyan-600"
-                        : "border-gray-600 hover:border-cyan-500"
-                        }`}
-                    >
-                      {todo.completed && (
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
+                todos.map((todo) => {
+                  const overdue = isOverdue(todo);
 
-                    <span className={`ml-4 text-sm sm:text-base transition-all ${todo.completed ? "text-gray-500 line-through" : "text-gray-200"}`}>
-                      {todo.title}
-                    </span>
-                  </div>
-                ))
+                  return (
+                    <div
+                      key={todo.id}
+                      onClick={() => setSelectedTodo(todo)}
+                      className={`group flex items-center p-4 border rounded-lg cursor-pointer transition-all duration-200 
+                        ${selectedTodo?.id === todo.id 
+                            ? "border-cyan-500/50 ring-1 ring-cyan-500/20 bg-gray-800/80" 
+                            : overdue 
+                                ? "border-red-500/40 bg-red-900/10 hover:border-red-500/60" // Overdue Style
+                                : "border-gray-800/50 bg-gray-900/50 hover:border-gray-700"  // Normal Style
+                        }
+                        ${todo.completed ? "opacity-60" : "opacity-100"}
+                      `}
+                    >
+                      <div
+                        onClick={(e) => toggleTodo(e, todo.id)}
+                        className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer z-10 
+                          ${todo.completed
+                            ? "bg-cyan-600 border-cyan-600"
+                            : overdue 
+                                ? "border-red-500 hover:border-red-400" 
+                                : "border-gray-600 hover:border-cyan-500"
+                          }`}
+                      >
+                        {todo.completed && (
+                          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+
+                      <div className="ml-4 flex-1">
+                          <div className="flex items-center gap-2">
+                             <span className={`text-sm sm:text-base transition-all ${
+                                todo.completed ? "text-gray-500 line-through" 
+                                : overdue ? "text-red-400 font-medium" // Red Text for overdue
+                                : "text-gray-200"
+                             }`}>
+                               {todo.title}
+                             </span>
+                             
+                             {/* Small Overdue Badge */}
+                             {!todo.completed && overdue && (
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-900/30 px-1.5 py-0.5 rounded">
+                                    Overdue
+                                </span>
+                             )}
+                          </div>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           )}

@@ -80,8 +80,7 @@ export default function ToDoSideBar({ todo, onClose, onDelete, onUpdate, onChang
       });
 
       if (response.ok) {
-        onUpdate(mergedTodo); // Update parent
-        toast.success("Saved");
+        onUpdate(mergedTodo);
       } else {
         toast.error("Failed to save");
       }
@@ -106,11 +105,7 @@ export default function ToDoSideBar({ todo, onClose, onDelete, onUpdate, onChang
     setIsUpdating(true);
     const token = localStorage.getItem("token");
 
-    // Optimistically update parent so UI feels instant
-    const updatedTodoObj = { ...todo, category: newCategoryName };
-
     try {
-        // 👇👇 REPLACE THIS URL WITH YOUR SPECIFIC CATEGORY UPDATE ENDPOINT 👇👇
         const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/todo/item/category?ItemId=${todo.id}&CatId=${selectedCatObj.Id}`, { 
             method: "PUT", // or PATCH
             headers: {
@@ -125,7 +120,6 @@ export default function ToDoSideBar({ todo, onClose, onDelete, onUpdate, onChang
             toast.success("Category changed");
         } else {
             toast.error("Failed to change category");
-            // Optional: Revert change if failed
         }
     } catch (error) {
         console.error("Category update error", error);
