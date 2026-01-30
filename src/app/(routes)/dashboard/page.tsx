@@ -22,10 +22,10 @@ export default function DashboardPage() {
   const isOverdue = (todo: Todo) => {
     // If no date or already completed, it's not overdue
     if (!todo.dueDate || todo.completed) return false;
-    
+
     const now = new Date();
     const due = new Date(todo.dueDate);
-    
+
     // Set time to midnight for fair comparison (optional, depends on your precision)
     // currently comparing strict timestamps
     return due < now;
@@ -192,11 +192,11 @@ export default function DashboardPage() {
                       key={todo.id}
                       onClick={() => setSelectedTodo(todo)}
                       className={`group flex items-center p-4 border rounded-lg cursor-pointer transition-all duration-200 
-                        ${selectedTodo?.id === todo.id 
-                            ? "border-cyan-500/50 ring-1 ring-cyan-500/20 bg-gray-800/80" 
-                            : overdue 
-                                ? "border-red-500/40 bg-red-900/10 hover:border-red-500/60" // Overdue Style
-                                : "border-gray-800/50 bg-gray-900/50 hover:border-gray-700"  // Normal Style
+                        ${selectedTodo?.id === todo.id
+                          ? "border-cyan-500/50 ring-1 ring-cyan-500/20 bg-gray-800/80"
+                          : overdue
+                            ? "border-red-500/40 bg-red-900/10 hover:border-red-500/60" // Overdue Style
+                            : "border-gray-800/50 bg-gray-900/50 hover:border-gray-700"  // Normal Style
                         }
                         ${todo.completed ? "opacity-60" : "opacity-100"}
                       `}
@@ -206,9 +206,9 @@ export default function DashboardPage() {
                         className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer z-10 
                           ${todo.completed
                             ? "bg-cyan-600 border-cyan-600"
-                            : overdue 
-                                ? "border-red-500 hover:border-red-400" 
-                                : "border-gray-600 hover:border-cyan-500"
+                            : overdue
+                              ? "border-red-500 hover:border-red-400"
+                              : "border-gray-600 hover:border-cyan-500"
                           }`}
                       >
                         {todo.completed && (
@@ -219,22 +219,21 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="ml-4 flex-1">
-                          <div className="flex items-center gap-2">
-                             <span className={`text-sm sm:text-base transition-all ${
-                                todo.completed ? "text-gray-500 line-through" 
-                                : overdue ? "text-red-400 font-medium" // Red Text for overdue
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm sm:text-base transition-all ${todo.completed ? "text-gray-500 line-through"
+                              : overdue ? "text-red-400 font-medium" // Red Text for overdue
                                 : "text-gray-200"
-                             }`}>
-                               {todo.title}
-                             </span>
-                             
-                             {/* Small Overdue Badge */}
-                             {!todo.completed && overdue && (
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-900/30 px-1.5 py-0.5 rounded">
-                                    Overdue
-                                </span>
-                             )}
-                          </div>
+                            }`}>
+                            {todo.title}
+                          </span>
+
+                          {/* Small Overdue Badge */}
+                          {!todo.completed && overdue && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-900/30 px-1.5 py-0.5 rounded">
+                              Overdue
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -255,6 +254,7 @@ export default function DashboardPage() {
           onChange={handleRemoveToDo}
         />
       )}
+
     </div>
   );
 }

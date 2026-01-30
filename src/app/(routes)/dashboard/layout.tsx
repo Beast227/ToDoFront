@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useCategories } from "@/hook/useCategories"; // 👈 Import the hook
+import UserProfile from "@/components/UserProfile";
 
 export default function DashboardLayout({
     children,
@@ -13,9 +14,10 @@ export default function DashboardLayout({
 }) {
     // 1. Use SWR Hook (Replaces useState/useEffect)
     const { categories, mutate } = useCategories();
-    
+
     const [newCatName, setNewCatName] = useState("");
     const searchParams = useSearchParams();
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     // 🔴 FIX: Matches the 'title' param used in your Links
     const activeCategory = searchParams.get("title") || "My Day";
@@ -27,7 +29,7 @@ export default function DashboardLayout({
 
         // Optimistic UI Update (Fake it immediately)
         // We create a temp object to show instantly
-        const tempCat = { Id: Date.now(), category: newCatName }; 
+        const tempCat = { Id: Date.now(), category: newCatName };
         mutate([...categories, tempCat], false); // false = don't revalidate yet
 
         try {
@@ -93,17 +95,16 @@ export default function DashboardLayout({
                 </div>
 
                 <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                    
+
                     {/* 1. MY DAY (Pinned) */}
                     {myDayCat && (
                         <div className="mb-4">
                             <Link
                                 href={`/dashboard?catId=${myDayCat.Id}&title=${myDayCat.category}`}
-                                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200 group ${
-                                    activeCategory === "My Day"
-                                        ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
-                                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                                }`}
+                                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-all duration-200 group ${activeCategory === "My Day"
+                                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+                                    : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                                    }`}
                             >
                                 <svg className={`w-5 h-5 mr-3 shrink-0 ${activeCategory === "My Day" ? "text-cyan-400" : "text-gray-500 group-hover:text-gray-300"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -121,13 +122,12 @@ export default function DashboardLayout({
                     {otherCategories.map((cat) => {
                         const isActive = activeCategory === cat.category;
                         return (
-                            <div 
+                            <div
                                 key={cat.Id}
-                                className={`group flex items-center gap-0.5 justify-between relative text-sm font-medium rounded-md transition-all duration-200 ${
-                                    isActive
-                                        ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
-                                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                                }`}
+                                className={`group flex items-center gap-0.5 justify-between relative text-sm font-medium rounded-md transition-all duration-200 ${isActive
+                                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+                                    : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                                    }`}
                             >
                                 <Link
                                     href={`/dashboard?catId=${cat.Id}&title=${cat.category}`}
@@ -170,8 +170,8 @@ export default function DashboardLayout({
             {/* --- MAIN CONTENT --- */}
             <div className="flex-1 flex flex-col min-w-0">
                 <header className="h-16 bg-gray-900/50 backdrop-blur-md border-b border-gray-800 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-                     {/* Search & Profile (Same as before) */}
-                     <div className="flex-1 max-w-lg">
+                    {/* Search & Profile (Same as before) */}
+                    <div className="flex-1 max-w-lg">
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -181,14 +181,23 @@ export default function DashboardLayout({
                             <input type="text" placeholder="Search tasks..." className="block w-full pl-10 pr-3 py-1.5 border border-gray-700 rounded-md bg-gray-800 text-gray-300 placeholder-gray-500 focus:outline-none focus:bg-gray-950 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 sm:text-sm" />
                         </div>
                     </div>
-                    <div className="ml-4 flex items-center gap-4">
-                        <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 flex items-center justify-center text-white font-bold shadow-lg shadow-cyan-500/20 cursor-pointer">U</div>
+                    <div
+                        onClick={() => setIsProfileOpen(true)}
+                        className="h-9 w-9 rounded-full bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-cyan-500/50 flex items-center justify-center text-gray-400 hover:text-cyan-400 shadow-lg cursor-pointer transition-all duration-200"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
                     </div>
                 </header>
 
                 <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative">
                     {children}
                 </main>
+
+                {isProfileOpen && (
+                    <UserProfile onClose={() => setIsProfileOpen(false)} />
+                )}
             </div>
         </div>
     );
