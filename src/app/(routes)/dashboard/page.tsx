@@ -20,14 +20,12 @@ export default function DashboardPage() {
 
   // --- HELPER: Check if Overdue ---
   const isOverdue = (todo: Todo) => {
-    // If no date or already completed, it's not overdue
     if (!todo.dueDate || todo.completed) return false;
 
     const now = new Date();
     const due = new Date(todo.dueDate);
+    due.setHours(23, 59, 59, 999);
 
-    // Set time to midnight for fair comparison (optional, depends on your precision)
-    // currently comparing strict timestamps
     return due < now;
   };
 
@@ -137,9 +135,32 @@ export default function DashboardPage() {
     }
   };
 
-  const toggleTodo = (e: React.MouseEvent, id: number) => {
+  const toggleTodo = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
-    setTodos(todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+
+    const todo = todos.find(t => t.id === id);
+    const token = localStorage.getItem("token");
+    if (!todo) return;
+
+    const completed = todo.completed;
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/todo/item/completed?ItemId=${id}&completed=${!completed}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      }
+    )
+
+    const data = await response.json();
+    console.log(data);
+
+    if (response.ok) {
+      setTodos(todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+    }
+
   };
 
   return (
@@ -221,8 +242,8 @@ export default function DashboardPage() {
                       <div className="ml-4 flex-1">
                         <div className="flex items-center gap-2">
                           <span className={`text-sm sm:text-base transition-all ${todo.completed ? "text-gray-500 line-through"
-                              : overdue ? "text-red-400 font-medium" // Red Text for overdue
-                                : "text-gray-200"
+                            : overdue ? "text-red-400 font-medium" // Red Text for overdue
+                              : "text-gray-200"
                             }`}>
                             {todo.title}
                           </span>
